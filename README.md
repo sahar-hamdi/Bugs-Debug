@@ -1,8 +1,7 @@
-# QA-Agentic-System-Ollama-Bugs
+# **EEBus QA Agentic System - Bugs & Resolutions Log**
 all the bugs I faced while working on a QA Test Cases Generator using Ollama llama model
 
 
-## **EEBus QA Agentic System - Bugs & Resolutions Log**
 
 This document tracks the technical challenges, bugs, and architectural limitations encountered during the development of the EEBus QA Test Case Generation pipeline, along with their solutions.
 
