@@ -1,9 +1,9 @@
-# **EEBus QA Agentic System - Bugs & Resolutions Log**
+# **General - Bugs & Resolutions Log**
 all the bugs I faced while working on a QA Test Cases Generator using Ollama llama model
 
 
 
-This document tracks the technical challenges, bugs, and architectural limitations encountered during the development of the EEBus QA Test Case Generation pipeline, along with their solutions.
+This document tracks the technical challenges, bugs, and architectural limitations encountered during the development of the EEBus QA Test Case Generation pipeline, and any other systems I work on along with their solutions.
 
 ### **1. Environment & Infrastructure Bugs**
 
@@ -80,8 +80,34 @@ Solution: Injected a strict, high-priority directive into both Positive and Nega
 
 **3.1. Context Fragmentation (Ongoing Challenge)**
 
-Description: The QA Reviewer Agent is rejecting test cases because they are logically flawed or test the wrong actor.
+* Description: The QA Reviewer Agent is rejecting test cases because they are logically flawed or test the wrong actor.
 
-Root Cause: By feeding the LLM isolated sentences to force atomic test cases, the LLM loses the Global Context (preconditions, overarching state machines, and actor definitions defined earlier in the chunk/document).
+* Root Cause: By feeding the LLM isolated sentences to force atomic test cases, the LLM loses the Global Context (preconditions, overarching state machines, and actor definitions defined earlier in the chunk/document).
 
-Proposed Solution: Refactor the architecture to a Context-Aware approach. The pipeline must pass the full chunk text as background context to the LLM, while explicitly designating the extracted sentence as the specific target for test generation.
+* Proposed Solution: Refactor the architecture to a Context-Aware approach. The pipeline must pass the full chunk text as background context to the LLM, while explicitly designating the extracted sentence as the specific target for test generation.
+
+
+### 4. MLflow Errors
+
+**4.1 OSError: [WinError 10022] An invalid argument was supplied**
+
+* Cause: MLflow's newer server runs on uvicorn with 4 worker processes by default. Windows doesn't support multiple processes sharing the same listening socket the way uvicorn tries to do it.
+* Fix: Force a single worker:
+  
+<img width="870" height="113" alt="image" src="https://github.com/user-attachments/assets/f9012b16-2c9e-48f7-8a48-d983a01ebd30" />
+
+**4.2 Runs logged in notebook don't appear in the UI at all (client/server store mismatch)**
+
+* Cause: As of MLflow 3.7+, the server default (when no --backend-store-uri is passed) is sqlite:///mlflow.db, but the Python client default (when mlflow.set_tracking_uri() isn't called) is the local ./mlruns folder. Notebook and UI end up reading from two different stores.
+* Fix: Never rely on defaults — set the same URI explicitly in both places:
+
+  <img width="852" height="218" alt="image" src="https://github.com/user-attachments/assets/72c18518-2a03-4b9f-ac48-0568c8a11dbe" />
+
+**4.3 mlflow.set_tracking_uri() called after mlflow.set_experiment()**
+
+* Cause: set_experiment() queries the backend immediately to find/create the experiment. If it's called before set_tracking_uri(), it uses whatever the default backend is at that moment — creating the experiment in the wrong store.
+* Fix: Order matters — always:
+
+  <img width="847" height="150" alt="image" src="https://github.com/user-attachments/assets/9f6fced3-246a-4ce5-9dc0-bc35b3bdc2cb" />
+
+
